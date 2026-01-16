@@ -1,0 +1,20 @@
+# Основные библиотеки для работы и графики
+matplotlib>=3.8.0
+opencv-python>=4.8.0
+pillow>=10.0.0
+PyYAML>=6.0.1
+requests>=2.31.0
+scipy>=1.11.0
+polars>=0.20.0
+psutil>=5.9.0
+
+# Математика и нейросети
+sympy>=1.12
+torch
+torchvision
+torchaudio
+ultralytics>=8.1.0
+
+# Дополнительные инструменты
+labelme2yolo>=0.1.0
+python-dateutil>=2.8.2
