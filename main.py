@@ -1,59 +1,42 @@
 import cv2
-from ultralytics import YOLO
+import os
+import time
+from dotenv import load_dotenv
+from processing import image_processing
+from bot.sender import send_image_to_telegram
+from image_filter import get_latest_images
 
-# 1. Загружаем модель YOLO (yolov8n.pt - самая быстрая для видео в реальном времени)
-model = YOLO('yolov8n.pt')
+load_dotenv()
 
-# 2. Подключаемся к первой доступной камере (0 - стандартная веб-камера)
-cap = cv2.VideoCapture(0)
+def main():
+    # Папка с изображениями
+    images_dir = os.getenv('IMAGES_DIR')
+    # Папка с обработанными изображениями
+    images_return_dir = os.getenv('IMG_RETURN_DIR')
 
-# Проверяем, открылась ли камера
-if not cap.isOpened():
-    print("Ошибка: Не удалось открыть камеру")
-    exit()
+    # Время между сохранениями
+    interval_minutes = int(os.getenv('TIME_BETWEEN_CHECKS'))
+    interval_seconds = interval_minutes * 60
 
-while True:
-    # 3. Считываем текущий кадр с камеры
-    success, frame = cap.read()
+    # создать если нет
+    os.makedirs(images_return_dir, exist_ok=True)
 
-    if not success:
-        break
+    while True:
+        images = get_latest_images(images_dir)
 
-    # 4. Прогоняем кадр через нейросеть (stream=True оптимизирует использование памяти)
-    results = model(frame, stream=True)
+        if images:
+            # Обработка
+            finished_images = image_processing(images)
 
-    # Переменная для хранения общей площади обнаруженных товаров
-    total_goods_area = 0
-    # Площадь всего изображения (кадра)
-    frame_area = frame.shape[0] * frame.shape[1]
+            # Сохранение
+            for filename, image in finished_images:
+                save_path = os.path.join(images_return_dir, filename)
+                cv2.imwrite(save_path, image)
+                send_image_to_telegram(save_path)
+                print(f"Готово: {filename}")
 
-    # 5. Перебираем результаты детекции
-    for r in results:
-        # Отрисовываем стандартные рамки YOLO на кадре
-        frame = r.plot()
+        print(f"Ожидаю {interval_minutes} мин. до следующей проверки...")
+        time.sleep(interval_seconds)
 
-        # 6. Считаем площадь каждой рамки (Box)
-        for box in r.boxes.xywh:
-            # xywh[2] - ширина, xywh[3] - высота
-            w, h = box[2], box[3]
-            total_goods_area += (w * h)
-
-    # 7. Рассчитываем процент заполненности (отношение площади товаров к площади кадра)
-    # Примечание: 0.8 — это коэффициент поправки, так как между товарами всегда есть зазоры
-    occupancy = (total_goods_area / frame_area) * 100
-    occupancy = min(float(occupancy), 100.0)  # Ограничиваем до 100%
-
-    # 8. Выводим текст с процентом заполненности на экран
-    cv2.putText(frame, f"Filling: {occupancy:.1f}%", (20, 50),
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-    # 9. Показываем итоговое окно с видеопотоком
-    cv2.imshow("Shelf Scanning", frame)
-
-    # 10. Если нажата клавиша 'q', выходим из цикла
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-# 11. Освобождаем ресурсы камеры и закрываем все окна
-cap.release()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    main()
