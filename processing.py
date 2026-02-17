@@ -142,8 +142,8 @@ def image_processing(image_filenames):
             cv2.putText(image, text, (text_x, text_y), font, font_scale, void_color, thickness)
 
         # Скипаем изображение если не привышает минимальный пропуск на полках
-        if percentage_for_notification >= max_percent_void:
-            continue
+        # if percentage_for_notification >= max_percent_void:
+        #     continue
 
         # Сохраняем результат (имя файла и обработанный кадр) в итоговый список
         finished_images.append((filename, image))
