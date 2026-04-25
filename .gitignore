@@ -1,11 +1,12 @@
 .venv
+.idea
 test.py
 convert/convert.py
 datasets
-.idea
-marker
+models
+data_for_processing/marker
+data_for_processing/input_img
+data_for_processing/img_return
 runs
 train
 old
-images
-img_return
