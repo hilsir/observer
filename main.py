@@ -1,10 +1,14 @@
 import cv2
 import os
 import time
+from datetime import datetime, timedelta, timezone
+from processing.processing_image import image_processing
+from bot.sender import send_image_to_telegram,send_message_arr_to_telegram
+from image_filter_old import get_latest_images
 from dotenv import load_dotenv
-from processing import image_processing
-from bot.sender import send_image_to_telegram
-from image_filter import get_latest_images
+
+# заставить систему думать, что у вас архитектура gfx1100 (для федоры) на серваке коментить
+# os.environ['HSA_OVERRIDE_GFX_VERSION'] = '11.0.0'
 
 load_dotenv()
 
@@ -14,29 +18,41 @@ def main():
     # Папка с обработанными изображениями
     images_return_dir = os.getenv('IMG_RETURN_DIR')
 
-    # Время между сохранениями
-    interval_minutes = int(os.getenv('TIME_BETWEEN_CHECKS'))
-    interval_seconds = interval_minutes * 60
+    # Список нужных моментов (Иркутское время)
+    target_times = ["09:10", "12:10", "17:10", "21.10"]
+    last_run_time = ""  # Чтобы не срабатывало дважды в одну и ту же минуту
 
-    # создать если нет
+    # создать путь если нет
     os.makedirs(images_return_dir, exist_ok=True)
 
     while True:
-        images = get_latest_images(images_dir)
+        # Устанавливаем смещение для Иркутска (UTC+8)
+        irk_tz = timezone(timedelta(hours=8))
+        now_irk = datetime.now(irk_tz)
+        current_time_str = now_irk.strftime("%H:%M")
 
-        if images:
-            # Обработка
-            finished_images = image_processing(images)
+        # Проверяем, совпадает ли время и не запускались ли мы уже в эту минуту
+        if current_time_str in target_times and current_time_str != last_run_time:
 
-            # Сохранение
-            for filename, image in finished_images:
-                save_path = os.path.join(images_return_dir, filename)
-                cv2.imwrite(save_path, image)
-                send_image_to_telegram(save_path)
-                print(f"Готово: {filename}")
+            images = get_latest_images(images_dir)
 
-        print(f"Ожидаю {interval_minutes} мин. до следующей проверки...")
-        time.sleep(interval_seconds)
+            if images:
+                # Обработка
+                finished_images = image_processing(images)
+
+                # Сохранение
+                for filename, image, missing_report in finished_images:
+                    save_path = os.path.join(images_return_dir, filename)
+                    cv2.imwrite(save_path, image)
+                    send_image_to_telegram(save_path)
+                    send_message_arr_to_telegram(missing_report)
+                    print(f"Готово: {filename}")
+                    time.sleep(5)
+            last_run_time = current_time_str
+            print(f"Обработка завершена. Следующая проверка по расписанию...")
+
+        # Проверяем время каждые 30 секунд
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()

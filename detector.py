@@ -1,13 +1,16 @@
 from ultralytics import YOLO
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-class ProductDetector:
-    def __init__(self, model_path, conf):
-        # Загружаем модель один раз при инициализации
+class ModelProductDetector:
+    def __init__(self, model_path):
+        # Загружаем модель при инициализации
         self.model = YOLO(model_path)
-        self.conf = conf
+        self.conf = float(os.getenv('CONF_THRESHOLD'))
 
     def detect(self, image):
-        """Возвращает список словарей с координатами найденных товаров."""
+    # Возвращает список словарей с координатами найденных товаров
         results = self.model(image, conf=self.conf, verbose=False)
         boxes = []
         for r in results:
