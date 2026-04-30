@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import zoneinfo
 
 # заставить систему думать, что у вас архитектура gfx1100 (для федоры) на серваке коментить
-# os.environ['HSA_OVERRIDE_GFX_VERSION'] = '11.0.0'
+os.environ['HSA_OVERRIDE_GFX_VERSION'] = '11.0.0'
 
 load_dotenv()
 
