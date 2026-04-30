@@ -15,7 +15,7 @@ os.environ['HSA_OVERRIDE_GFX_VERSION'] = '11.0.0'
 load_dotenv()
 
 def main():
-
+    print("start")
     # Папка с изображениями
     images_dir = os.getenv('IMAGES_DIR')
     # Папка с обработанными изображениями
@@ -36,7 +36,6 @@ def main():
 
         # Проверяем, совпадает ли время и не запускались ли мы уже в эту минуту
         if current_time_str in target_times and current_time_str != last_run_time:
-            print("start")
             images = get_latest_images(images_dir)
 
             if images:
