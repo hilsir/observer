@@ -5,7 +5,7 @@ import os
 
 # Функция для отправки изображения в Telegram
 def send_image_to_telegram(file_path):
-    # Получение токена бота из переменных окружения
+    # Получение токена бота из переменных окруженияф
     token = os.getenv('BOT_TOKEN')
     # Получение ID группы из переменных окружения
     chat_id = os.getenv('GROUP_ID')

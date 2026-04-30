@@ -3,7 +3,7 @@ import os
 import json
 from detector import ModelProductDetector
 
-from  model_selection import ModelManager
+from model_selection import ModelManager
 from identification.goods_identification import Identification
 from string_formation.create_path import CreatePath
 from drawing_tools.draw_product_information import draw_product_information
@@ -11,9 +11,8 @@ from processing.markup_processing.shelf_processing import ShelfProcessing
 from checking_planogram.compliance_palnogram import CompliancePlanogram
 from processing.product_identifier import identify
 from dotenv import load_dotenv
+
 load_dotenv()
-
-
 
 def image_processing(image_filenames):
     # Берем настройки напрямую из env
@@ -24,9 +23,9 @@ def image_processing(image_filenames):
     model_manager = ModelManager()
     finished_images = []
 
-
     print(f"Найдено изображений для обработки: {len(image_filenames)}")
-
+    # map
+    # не перезваписывать img в одну переменую
     for filename in image_filenames:
 
         # путь к картинке
@@ -65,9 +64,11 @@ def image_processing(image_filenames):
             all_products_identified
         )
 
-        matches_report, missing_report, present_report = planogram.comparison(all_products_identified, markup,
-                                                                              markup_path)
-
+        matches_report, missing_report, present_report = planogram.comparison(
+            all_products_identified,
+            markup,
+            markup_path
+        )
 
         ## Скипаем изображение если не привышает минимальный пропуск на полках
         ## if percentage_for_notification >= max_percent_void:

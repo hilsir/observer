@@ -10,4 +10,5 @@ data_for_processing/img_return
 runs
 train
 old
-____
+requirements.txt
+.env
