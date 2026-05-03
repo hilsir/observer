@@ -17,10 +17,26 @@ def save_locally(save_path, missing_report):
     if not os.path.exists(full_path_folder):
         os.makedirs(full_path_folder)
 
+    text_str = ""
+    for i, shelf in enumerate(missing_report):
+        products = ", ".join(str(p) for p in shelf)
+        text_str += f"Полка {i + 1}: {products}\n"
+
+    # Для ромы из будущего, тут проёб с типом дангных. Костыльная склейка листа
+    if isinstance(missing_report, list):
+        # Превращаем в строку (например, через запятые и переносы)
+        text_str = "\n".join([", ".join(map(str, shelf)) for shelf in missing_report if isinstance(shelf, list)])
+    else:
+        text_str = str(missing_report)
+
+    # Обрезаем
+    if len(text_str) > 3500:
+        text_str = text_str[:3500] + "...\n\n[Сообщение слишком большое]"
+
     # Сохраняем текст
     report_path = os.path.join(full_path_folder,f"{folder_name}.txt")
     with open(report_path, "w", encoding="utf-8") as f:
-        if isinstance(missing_report, list):
+        if isinstance(text_str, list):
             f.write("\n".join(str(item) for item in missing_report))
         else:
             f.write(str(missing_report))
