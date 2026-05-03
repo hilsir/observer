@@ -28,12 +28,9 @@ def save_locally(save_path, missing_report):
         text_str = text_str[:3500] + "...\n\n[Сообщение слишком большое]"
 
     # Сохраняем текст
-    report_path = os.path.join(full_path_folder,f"{folder_name}.txt")
+    report_path = os.path.join(full_path_folder, f"{folder_name}.txt")
     with open(report_path, "w", encoding="utf-8") as f:
-        if isinstance(text_str, list):
-            f.write("\n".join(str(item) for item in missing_report))
-        else:
-            f.write(str(missing_report))
+        f.write(text_str)
 
     # Новый к путь картинке
     final_image_path = os.path.join(full_path_folder, file_name)
