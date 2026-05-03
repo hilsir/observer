@@ -17,17 +17,11 @@ def save_locally(save_path, missing_report):
     if not os.path.exists(full_path_folder):
         os.makedirs(full_path_folder)
 
+    # Для ромы из будущего, тут проёб с типом дангных. Костыльная склейка листа
     text_str = ""
     for i, shelf in enumerate(missing_report):
         products = ", ".join(str(p) for p in shelf)
         text_str += f"Полка {i + 1}: {products}\n"
-
-    # Для ромы из будущего, тут проёб с типом дангных. Костыльная склейка листа
-    if isinstance(missing_report, list):
-        # Превращаем в строку (например, через запятые и переносы)
-        text_str = "\n".join([", ".join(map(str, shelf)) for shelf in missing_report if isinstance(shelf, list)])
-    else:
-        text_str = str(missing_report)
 
     # Обрезаем
     if len(text_str) > 3500:
