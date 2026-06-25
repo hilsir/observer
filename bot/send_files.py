@@ -1,12 +1,11 @@
 import os
+import cv2
 
 
-def save_locally(save_path, missing_report):
+def save_locally(file_name, image, missing_report):
 
     base_dir = os.environ.get("RETURN_FILES")
 
-    # Имя картинки без расширения
-    file_name = os.path.basename(save_path)
     # Собраное имя папки
     folder_name = os.path.splitext(file_name)[0]
 
@@ -20,8 +19,14 @@ def save_locally(save_path, missing_report):
     # Для ромы из будущего, тут проёб с типом дангных. Костыльная склейка листа
     text_str = ""
     for i, shelf in enumerate(missing_report):
-        products = ", ".join(str(p) for p in shelf)
-        text_str += f"Полка {i + 1}: {products}\n"
+        if not shelf:
+            text_str += f"Полка {i + 1}: ---\n"
+            continue
+        mismatches = "; ".join(
+            f"поз. {item['position']}: ожидался '{item['expected']}', найден '{item['actual']}'"
+            for item in shelf
+        )
+        text_str += f"Полка {i + 1}: {mismatches}\n"
 
     # Обрезаем
     if len(text_str) > 3500:
@@ -32,7 +37,6 @@ def save_locally(save_path, missing_report):
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(text_str)
 
-    # Новый к путь картинке
+    # Сохранение картинки сразу в финальную папку
     final_image_path = os.path.join(full_path_folder, file_name)
-    # Сохранение картинки
-    os.replace(save_path, final_image_path)
+    cv2.imwrite(final_image_path, image)

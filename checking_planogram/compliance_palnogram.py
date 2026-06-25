@@ -74,6 +74,52 @@ class CompliancePlanogram:
 
 
 
+    def compare_positions(self, all_products_identified, markup, markup_path):
+        """
+        Дословно сравнивает порядок товаров на полке (слева-направо) с планограммой.
+        В отличие от comparison(), здесь не учитываются отсутствующие или лишние товары —
+        отмечаются только случаи, когда товар есть на полке, но стоит не на своей позиции.
+        """
+        name_markup = os.path.splitext(os.path.basename(markup_path))[0]
+        array_planogram = self.planogram.read_table_to_array(name_markup, "Planogramm")
+        array_products_identified = self._get_planogram_array(all_products_identified, markup)
+
+        mismatch_report = []
+        planogram_len = len(array_planogram)
+
+        for i in range(planogram_len):
+            shelf_expected = array_planogram[i]
+
+            if i < planogram_len - 1:
+                shelf_actual = array_products_identified[i] if i < len(array_products_identified) else []
+            else:
+                shelf_actual = []
+                for extra_shelf in array_products_identified[i:]:
+                    shelf_actual.extend(extra_shelf)
+
+            norm_expected = [self._normalize(name) for name in shelf_expected]
+            norm_actual = [self._normalize(name) for name in shelf_actual]
+
+            shelf_mismatches = []
+
+            for pos in range(min(len(norm_expected), len(norm_actual))):
+                if norm_expected[pos] == norm_actual[pos]:
+                    continue
+
+                # Несоответствие позиции фиксируем только если ожидаемый товар
+                # реально есть на полке (просто стоит в другом месте), иначе это
+                # отсутствующий товар, а не перестановка
+                if norm_expected[pos] in norm_actual:
+                    shelf_mismatches.append({
+                        'position': pos + 1,
+                        'expected': shelf_expected[pos],
+                        'actual': shelf_actual[pos],
+                    })
+
+            mismatch_report.append(shelf_mismatches)
+
+        return mismatch_report
+
     def _get_planogram_array(self, all_products_identified, markup):
 
         # Каждая строка массива — это товары на одной полке, отсортированные слева направо.
