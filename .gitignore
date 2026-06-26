@@ -12,3 +12,7 @@ train
 old
 requirements.txt
 .env
+__pycache__
+bot/__pycache__
+requirements локально.txt
+/home/sir/All/Projects/observer/checking_planogram/__pycache__/compliance_palnogram.cpython-311.pyc
