@@ -1,20 +1,20 @@
 import os
-import time
-from datetime import datetime, timedelta, timezone
-from processing.processing_image import image_processing
-from image_filter_old import get_latest_images
-from bot.send_files import save_locally
 from dotenv import load_dotenv
-import zoneinfo
+load_dotenv()
 
 # заставить систему думать, что архитектура gfx1100 (для федоры) на серваке коментить
 os.environ['HSA_OVERRIDE_GFX_VERSION'] = '11.0.0'
 
-load_dotenv()
+import time
+from datetime import datetime
+from processing.image_processing import image_processing
+from image_filter import get_img_names
+from save_result.send_files import save_locally
+import zoneinfo
 
 def main():
     print("start")
-    # Папка с изображениями
+
     images_dir = os.getenv('IMAGES_DIR')
 
     # Список нужных моментов (Иркутское время)
@@ -37,11 +37,11 @@ def main():
         time.sleep(1)
 
 def start(images_dir):
-    images = get_latest_images(images_dir)
+    image_file_names = get_img_names(images_dir)
 
-    if images:
-        # Обработка
-        finished_images = image_processing(images)
+    if image_file_names:
+        # Основная обработка
+        finished_images = image_processing(image_file_names)
 
         # Сохранение
         for filename, image, missing_report in finished_images:
@@ -51,10 +51,10 @@ def start(images_dir):
             time.sleep(5)
 
 def run_once():
-    # Запуск без ожидания времени (для тестов)
     images_dir = os.getenv('IMAGES_DIR')
     start(images_dir)
 
 if __name__ == "__main__":
     main()
+    # Запуск без ожидания времени (для тестов)
     # run_once()

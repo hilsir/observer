@@ -28,14 +28,14 @@ class PlanogramReader:
             raise FileNotFoundError(f"Файл {file_name} не найден")
 
         wb = openpyxl.load_workbook(file_path, data_only=True)
-        sheet = wb[sheet_name]
+        sheet = wb.worksheets[0]
 
         final_data = []
         for row in sheet.iter_rows(values_only=True):
             # Создаем список только из тех ячеек, где есть значение
             # (игнорируем None, пустые строки и пробелы)
             clean_row = [
-                cell for cell in row
+                str(cell) for cell in row
                 if cell is not None and str(cell).strip() != ""
             ]
 

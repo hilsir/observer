@@ -1,0 +1,3 @@
+from processing.check_planogram_compliance.checking_planogram.compliance_palnogram import CompliancePlanogram
+
+planogram = CompliancePlanogram()
