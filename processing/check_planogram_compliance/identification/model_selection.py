@@ -6,7 +6,7 @@ class ModelManager:
     def __init__(self):
         # Инициализируем модели один раз при создании менеджера
         self._models = {
-            # "10104443": Identification(os.getenv("MODEL_10104443_PATH")),
+            "10104444": Identification(os.getenv("MODEL_10104444_PATH")),
             "10104449": Identification(os.getenv("MODEL_10104449_PATH")),
             "10104450": Identification(os.getenv("MODEL_10104450_PATH")),
         }
