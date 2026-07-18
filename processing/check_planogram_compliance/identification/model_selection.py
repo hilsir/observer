@@ -1,20 +1,28 @@
 from processing.check_planogram_compliance.identification.goods_identification import Identification
-from router.router_models_config import get_model_key_for_planogram
+from router.router_models_config import get_model_key_for_planogram, MODEL_PLANOGRAMS
 import os
 
 class ModelManager:
     def __init__(self):
-        # Инициализируем модели один раз при создании менеджера
+        models_dir = os.getenv("MODES_PATH")
+        # Заргужаем все модели из списка
         self._models = {
-            "10104444": Identification(os.getenv("MODEL_10104444_PATH")),
-            "10104449": Identification(os.getenv("MODEL_10104449_PATH")),
-            "10104450": Identification(os.getenv("MODEL_10104450_PATH")),
+            model_key: Identification(f"{models_dir}/model_{model_key}.pth")
+            for model_key in MODEL_PLANOGRAMS
         }
 
     def get_model_for(self, planogram_name: str):
         # Удалить расширение из названия
-        name_no_expansion = os.path.splitext(planogram_name)[0]
+        planogram_name_no_exp = os.path.splitext(planogram_name)[0]
         # Получаем ключ модели через роутер по имени планограммы
-        model_key = get_model_key_for_planogram(name_no_expansion)
-        if model_key in self._models:
-            return self._models[model_key]
+        model_key = get_model_key_for_planogram(planogram_name_no_exp)
+
+        if model_key is None:
+            print(f"Модель не найдена: планограмма '{planogram_name}' не привязана ни к одному ключу модели")
+            return None
+
+        if model_key not in self._models:
+            print(f"Модель не найдена: ключ '{model_key}' отсутствует среди загруженных моделей")
+            return None
+
+        return self._models[model_key]

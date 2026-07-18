@@ -55,6 +55,6 @@ def run_once():
     start(images_dir)
 
 if __name__ == "__main__":
-    main()
+    #main()
     # Запуск без ожидания времени (для тестов)
-    # run_once()
+    run_once()
