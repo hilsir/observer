@@ -3,15 +3,12 @@ import json
 
 markup_dir = os.getenv('MARKUP_DIR')
 
-
-def load_markup(filename):
-    # Убрать расширение из названия
-    filename_no_expansion = os.path.splitext(filename)[0]
-    # путь к JSON-файлу с разметкой
-    markup_path = os.path.join(markup_dir, f"{filename_no_expansion}.json")
+def load_markup(name):
+    # путь к JSON-файлу по имени планограммы (без расширения)
+    markup_path = os.path.join(markup_dir, f"{name}.json")
 
     if not os.path.exists(markup_path):
-        print(f"Пропуск нечитаемой разметки: {filename} нет JSON")
+        print(f"Пропуск нечитаемой разметки: {name}.json не найден")
         return None, None
 
     # Лист массивов координат выделеных областей

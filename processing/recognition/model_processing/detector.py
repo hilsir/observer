@@ -16,11 +16,5 @@ class ModelProductDetector:
         for r in results:
             for box in r.boxes:
                 x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
-                boxes.append({
-                    'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2,
-                    'cx': (x1 + x2) // 2,
-                    'cy': (y1 + y2) // 2,
-                    'w': x2 - x1,
-                    'h': y2 - y1
-                })
+                boxes.append({'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2})
         return boxes

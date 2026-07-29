@@ -1,4 +1,4 @@
-from processing.check_planogram_compliance.identification.goods_identification import Identification
+from processing.recognition.goods_identification import Identification
 from router.router_models_config import get_model_key_for_planogram, MODEL_PLANOGRAMS
 import os
 

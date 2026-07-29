@@ -7,7 +7,7 @@ os.environ['HSA_OVERRIDE_GFX_VERSION'] = '11.0.0'
 
 import time
 from datetime import datetime
-from processing.image_processing import image_processing
+from processing.images_processing import images_processing
 from image_filter import get_img_names
 from save_result.send_files import save_locally
 import zoneinfo
@@ -41,13 +41,13 @@ def start(images_dir):
 
     if image_file_names:
         # Основная обработка
-        finished_images = image_processing(image_file_names)
+        finished_images = images_processing(image_file_names)
 
         # Сохранение
-        for filename, image, missing_report in finished_images:
-            save_locally(filename, image, missing_report)
+        for group, filename, image, missing_report in finished_images:
+            save_locally(group, filename, image, missing_report)
 
-            print(f"Готово: {filename}")
+            print(f"Готово: {group}/{filename}")
             time.sleep(5)
 
 def run_once():
@@ -55,6 +55,6 @@ def run_once():
     start(images_dir)
 
 if __name__ == "__main__":
-    #main()
+    main()
     # Запуск без ожидания времени (для тестов)
-    run_once()
+    # run_once()

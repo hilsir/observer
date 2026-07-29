@@ -4,9 +4,9 @@ import cv2
 images_dir = os.getenv('IMAGES_DIR')
 
 
-def load_image(img_file_name):
-    # путь к картинке (папка + имя файла)
-    image_path = os.path.join(images_dir, img_file_name)
+def load_image(group, img_file_name):
+    # путь к картинке (папка + группирующая подпапка + имя файла)
+    image_path = os.path.join(images_dir, group, img_file_name)
     # Загружаем изображение в формате BGR (Для OpenCV)
     image = cv2.imread(image_path)
 

@@ -6,9 +6,9 @@ from PIL import Image
 # Вырезает области товаров на изображении и определяет их названия
 def identify(image, all_products, selected_model):
 
-    for p in all_products:
+    for product in all_products:
         # Вырезаем область товара
-        crop_bgr = image[p['y1']:p['y2'], p['x1']:p['x2']]
+        crop_bgr = image[product['y1']:product['y2'], product['x1']:product['x2']]
 
         # Проверка что не битое
         if crop_bgr.size > 0:
@@ -31,11 +31,11 @@ def identify(image, all_products, selected_model):
             # Image.open понимает объекты-файлы
 
             name, confidence = selected_model.predict(img_buffer)
-            p['name'] = name
-            p['confidence'] = confidence
+            product['name'] = name
+            product['confidence'] = confidence
         else:
-            p['name'] = "Empty"
-            p['confidence'] = 0.0
+            product['name'] = "Empty"
+            product['confidence'] = 0.0
 
     # Сортировка (не обязательна)
     # all_products.sort(key=lambda x: x['x1'])

@@ -1,106 +1,78 @@
 import os
-from reading_planograms.reading_xlsx import PlanogramReader
-from processing.check_planogram_compliance.checking_planogram.normalize_name import normalize_name
-from processing.check_planogram_compliance.checking_planogram.get_planogram_array import get_planogram_array
+from processing.loader.load_xlsx import PlanogramReader
+from processing.check_planogram_compliance.checking_planogram.get_planogram_array.get_planogram_array import get_planogram_array
+from processing.check_planogram_compliance.checking_planogram.get_shelves.get_shelves import get_shelves
+from processing.check_planogram_compliance.checking_planogram.get_shelf_segments import get_shelf_segments
+from processing.check_planogram_compliance.checking_planogram.comparison.get_shelf_actual_products import get_shelf_actual_products
+from processing.check_planogram_compliance.checking_planogram.comparison.get_line_bounds import get_line_bounds
+from processing.check_planogram_compliance.checking_planogram.comparison.match_shelf_segments import match_shelf_segments
+from processing.check_planogram_compliance.checking_planogram.comparison.calc_percent_void import calc_percent_void
+
 
 class CompliancePlanogram:
     def __init__(self):
-        self.planogram = PlanogramReader()
+        self.planogram = PlanogramReader()  # читает xlsx-планограммы
 
+    # Сравнивает распознанные товары с планограммой полка за полкой.
     def comparison(self, all_products_identified, markup, markup_path):
+
+        # Читаем план (xlsx) и группируем распознанные товары по полкам разметки
+        # Имя файла без расширения -> str
         name_markup = os.path.splitext(os.path.basename(markup_path))[0]
-        array_planogram = self.planogram.read_table_to_array(name_markup,"Planogramm")
+        # Строки с таблицы -> list[list[str]]: строка таблицы, ячейка — строка
+        rows_with_xlsx = self.planogram.read_table_to_array(name_markup)
+        # Полки: имя+размер товара -> list[list[{'name': str, 'size': float}]]
+        array_planogram = get_shelves(rows_with_xlsx)
+        # Товары по полкам разметки -> list[list[dict]]: словарь товара (x1,y1,x2,y2,name,confidence);
         array_products_identified = get_planogram_array(all_products_identified, markup)
 
         missing_report = []
         present_report = []
         matches_report = []
-
-        planogram_len = len(array_planogram)
-
-        for i in range(planogram_len):
-            shelf_expected = array_planogram[i]
-
-            if i < planogram_len - 1:
-                shelf_actual = array_products_identified[i] if i < len(array_products_identified) else []
-            else:
-                shelf_actual = []
-                for extra_shelf in array_products_identified[i:]:
-                    shelf_actual.extend(extra_shelf)
-
-            # Создаем список нормализованных названий для текущей полки (факт)
-            # Храним кортеж (нормализованное_имя, оригинальное_имя)
-            temp_actual_norm = [normalize_name(name) for name in shelf_actual]
-            # Оригинальные имена для вывода в отчет
-            temp_actual_orig = shelf_actual.copy()
-
-            shelf_missing = []
-            shelf_matches = []
-
-            for product_name in shelf_expected:
-                norm_expected = normalize_name(product_name)
-
-                if norm_expected in temp_actual_norm:
-                    # Находим индекс первого совпадения
-                    idx = temp_actual_norm.index(norm_expected)
-
-                    # Добавляем в совпадения (оригинальное имя из плана)
-                    shelf_matches.append(product_name)
-
-                    # Удаляем из временных списков, чтобы не посчитать дважды
-                    temp_actual_norm.pop(idx)
-                    temp_actual_orig.pop(idx)
-                else:
-                    # Товар не найден даже после нормализации
-                    shelf_missing.append(product_name)
-
-            missing_report.append(shelf_missing)
-            matches_report.append(shelf_matches)
-            present_report.append(temp_actual_orig)  # Здесь остаются оригинальные лишние товары
-
-        return matches_report, missing_report, present_report
-
-
-
-    def compare_positions(self, all_products_identified, markup, markup_path):
-        """
-        (Нагенерено)
-        Дословно сравнивает порядок товаров на полке (слева-направо) с планограммой.
-        В отличие от comparison(), здесь не учитываются отсутствующие или лишние товары —
-        отмечаются только случаи, когда товар есть на полке, но стоит не на своей позиции.
-        """
-        name_markup = os.path.splitext(os.path.basename(markup_path))[0]
-        array_planogram = self.planogram.read_table_to_array(name_markup, "Planogramm")
-        array_products_identified = get_planogram_array(all_products_identified, markup)
-
         mismatch_report = []
+        shelf_results = []
+
         planogram_len = len(array_planogram)
 
         for i in range(planogram_len):
+
+            # Линия разметки для этой полки; если линий меньше, чем полок в плане — берём последнюю
+            line = markup[i] if i < len(markup) else markup[-1]
+            # левый и правый край полки
+            line_x_min, line_x_max = get_line_bounds(line)
+
+
             shelf_expected = array_planogram[i]
+            # Делит полку на сегменты по размерам товаров -> list[{'name': str, 'size': float, 'x1': float, 'x2': float}]
+            # x1,x2 позиция сегмента
+            segments = get_shelf_segments(shelf_expected, line_x_min, line_x_max)
 
-            if i < planogram_len - 1:
-                shelf_actual = array_products_identified[i] if i < len(array_products_identified) else []
-            else:
-                shelf_actual = []
-                for extra_shelf in array_products_identified[i:]:
-                    shelf_actual.extend(extra_shelf)
+            # товары на этой полке
+            shelf_actual = get_shelf_actual_products(array_products_identified, i, planogram_len)
 
-            norm_expected = [normalize_name(name) for name in shelf_expected]
-            norm_actual = [normalize_name(name) for name in shelf_actual]
+            # Сравнивает сегменты с товарами по пересечению: каждому сегменту — свой товар или пусто.
+            # shelf_missing/matches — имена товаров не найденые/найденые,
+            # shelf_mismatches — {position,expected,actual},
+            # - position — номер позиции на полке (считая с 1)
+            # - expected — что должно было стоять по плану
+            # - actual — что реально нашлось в этом месте
+            # extra_products — товары, не попавшие ни в один сегмент (лишние)
+            shelf_missing, shelf_matches, shelf_mismatches, extra_products = match_shelf_segments(segments, shelf_actual)
 
-            shelf_mismatches = []
+            # Товары на полке, не привязанные ни к одному сегменту — лишние, на отрисовке жёлтые
+            for extra_product in extra_products:
+                extra_product['status'] = 'mismatch'
 
-            for pos in range(min(len(norm_expected), len(norm_actual))):
-                if norm_expected[pos] == norm_actual[pos]:
-                    continue
+            missing_report.append(shelf_missing)      # имена товаров, которых не нашлось
+            matches_report.append(shelf_matches)      # имена товаров, найденных на своём месте
+            mismatch_report.append(shelf_mismatches)  # товар есть, но не тот: {position, expected, actual}
 
-                shelf_mismatches.append({
-                    'position': pos + 1,
-                    'expected': shelf_expected[pos],
-                    'actual': shelf_actual[pos],
-                })
+            extra_names = [product.get('name', 'Unknown') for product in extra_products]  # имена лишних товаров
+            present_report.append(extra_names)
 
-            mismatch_report.append(shelf_mismatches)
+            shelf_results.append({
+                'segments': segments,                                                   # сегменты полки со статусами — для отрисовки
+                'percent_void': calc_percent_void(segments, line_x_min, line_x_max),    # процент пустоты полки
+            })
 
-        return mismatch_report
+        return matches_report, missing_report, present_report, mismatch_report, shelf_results

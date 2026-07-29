@@ -2,15 +2,15 @@ import os
 import cv2
 
 
-def save_locally(file_name, image, combined_report):
+def save_locally(group, file_name, image, combined_report):
 
     base_dir = os.environ.get("RETURN_FILES")
 
     # Собраное имя папки
     folder_name = os.path.splitext(file_name)[0]
 
-    # Полный путь
-    full_path_folder = os.path.join(base_dir, folder_name)
+    # Полный путь — та же группирующая подпапка, что и у исходного фото
+    full_path_folder = os.path.join(base_dir, group, folder_name)
 
     # Создаем папку, если её нет
     if not os.path.exists(full_path_folder):

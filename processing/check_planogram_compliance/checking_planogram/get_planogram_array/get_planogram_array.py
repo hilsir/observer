@@ -1,6 +1,6 @@
 import numpy as np
 
-from processing.check_planogram_compliance.checking_planogram.is_product_on_line import is_product_on_line
+from processing.check_planogram_compliance.checking_planogram.get_planogram_array.is_product_on_line import is_product_on_line
 
 
 def get_planogram_array(all_products_identified, markup):
@@ -28,8 +28,8 @@ def get_planogram_array(all_products_identified, markup):
         # Сортируем товары на конкретной полке строго слева направо
         products_on_current_shelf.sort(key=lambda p: p['x1'])
 
-        # Собираем только названия (имена) товаров для этой строки
-        shelf_row = [p.get('name', 'Unknown') for p in products_on_current_shelf]
-        planogram_array.append(shelf_row)
+        # Отдаём сами словари товаров (а не только имена) — координаты нужны дальше,
+        # чтобы сравнивать пересечение рамки товара с сегментом планограммы
+        planogram_array.append(products_on_current_shelf)
 
     return planogram_array

@@ -9,8 +9,9 @@ load_dotenv()
 
 class PlanogramReader:
     def __init__(self):
-        # 1. Определяем корень проекта (поднимаемся на уровень выше от текущего скрипта)
-        project_root = Path(__file__).resolve().parent.parent
+        # 1. Определяем корень проекта (поднимаемся на 2 уровня выше от текущего скрипта:
+        # processing/loader/load_xlsx.py -> processing/loader -> processing -> корень)
+        project_root = Path(__file__).resolve().parent.parent.parent
 
         # 2. Грузим .env, который лежит в корне
         load_dotenv(project_root / ".env")
@@ -21,7 +22,7 @@ class PlanogramReader:
         # 4. Формируем финальный абсолютный путь к папке с планограммами
         self.folder_path = (project_root / env_dir).resolve()
 
-    def read_table_to_array(self, file_name, sheet_name):
+    def read_table_to_array(self, file_name):
         file_path = self.folder_path / (file_name + ".xlsx")
 
         if not file_path.exists():
@@ -45,18 +46,3 @@ class PlanogramReader:
 
         wb.close()
         return final_data
-
-
-# --- Пример использования ---
-if __name__ == "__main__":
-    reader = PlanogramReader()
-    try:
-        # Укажите имя файла и название листа (таблицы) внутри него
-        table_data = reader.read_table_to_array("10104443", "Planogramm")
-
-        print(f"Прочитано строк: {len(table_data)}")
-        for row in table_data[:20]:  # Вывод первых 5 строк для проверки
-            print(row)
-
-    except Exception as e:
-        print(f"Ошибка: {e}")
