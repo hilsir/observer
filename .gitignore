@@ -4,9 +4,7 @@ test.py
 convert/convert.py
 datasets
 models
-data_for_processing/marker
-data_for_processing/input_img
-data_for_processing/img_return
+data_for_processing
 runs
 train
 old

@@ -17,15 +17,18 @@ class Identification:
         if not path_to_model:
             raise ValueError("Ошибка: модель по расположению не найдена в .env")
 
-        # Ищем корень проекта — поднимаемся вверх от этого файла, пока не найдём папку models/.
-        # Не завязываемся на то, сколько уровней вложенности у этого файла — оно может меняться.
-        project_root = Path(__file__).resolve().parent
-        while not (project_root / "models").exists() and project_root != project_root.parent:
-            project_root = project_root.parent
+        # Старое поведение (путь от корня проекта, начинающийся с "/") оставлено как
+        # запасной вариант для обратной совместимости.
+        if Path(path_to_model).is_absolute():
+            model_full_path = Path(path_to_model).resolve()
+        else:
+            # Ищем корень проекта — поднимаемся вверх от этого файла, пока не найдём папку models/.
+            # Не завязываемся на то, сколько уровней вложенности у этого файла — оно может меняться.
+            project_root = Path(__file__).resolve().parent
+            while not (project_root / "models").exists() and project_root != project_root.parent:
+                project_root = project_root.parent
 
-        # path_to_model начинается с "/" (путь от корня проекта) — убираем слэш,
-        # чтобы pathlib не принял его за абсолютный путь и не отбросил project_root.
-        model_full_path = (project_root / path_to_model.lstrip("/\\")).resolve()
+            model_full_path = (project_root / path_to_model.lstrip("/\\")).resolve()
 
         print(f"--- Устройство: {self.device} ---")
         print(f"--- Файл модели: {model_full_path} ---")

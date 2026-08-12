@@ -1,15 +1,11 @@
 from processing.recognition.goods_identification import Identification
-from router.router_models_config import get_model_key_for_planogram, MODEL_PLANOGRAMS
+from router.router_models_config import get_model_key_for_planogram
 import os
 
 class ModelManager:
     def __init__(self):
-        models_dir = os.getenv("MODES_PATH")
-        # Заргужаем все модели из списка
-        self._models = {
-            model_key: Identification(f"{models_dir}/model_{model_key}.pth")
-            for model_key in MODEL_PLANOGRAMS
-        }
+        self._models_dir = os.getenv("MODES_PATH")
+        self._models = {}
 
     def get_model_for(self, planogram_name: str):
         # Удалить расширение из названия
@@ -22,7 +18,10 @@ class ModelManager:
             return None
 
         if model_key not in self._models:
-            print(f"Модель не найдена: ключ '{model_key}' отсутствует среди загруженных моделей")
-            return None
+            self._models[model_key] = Identification(f"{self._models_dir}/model_{model_key}.pth")
 
         return self._models[model_key]
+
+    # сброс кеша — чтобы переобученные модели подхватывались без перезапуска процесса
+    def reset(self):
+        self._models = {}
