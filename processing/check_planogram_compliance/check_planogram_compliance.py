@@ -23,11 +23,13 @@ def check_planogram_compliance(image, all_products_identified, markup, markup_pa
     # 1. Тонкая исходная разметка полок (нижний слой)
     image = markup_lines_drawer.draw(image, markup)
 
+
     # 2. Красные точки — ориентиры ожидаемых позиций товаров поверх разметки
     image = shelf_segments_drawer.draw(image, shelf_results, markup)
 
     # 3. Цветные рамки найденных товаров поверх точек-ориентиров
     image = draw_product_information(image, all_products_identified)
+
 
     # 4. Процент пустоты полки — маленькой цифрой поверх всего остального
     image = void_percent_drawer.draw(image, shelf_results, markup)

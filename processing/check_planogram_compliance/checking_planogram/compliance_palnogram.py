@@ -7,14 +7,64 @@ from processing.check_planogram_compliance.checking_planogram.comparison.get_she
 from processing.check_planogram_compliance.checking_planogram.comparison.get_line_bounds import get_line_bounds
 from processing.check_planogram_compliance.checking_planogram.comparison.match_shelf_segments import match_shelf_segments
 from processing.check_planogram_compliance.checking_planogram.comparison.calc_percent_void import calc_percent_void
-
+from processing.check_planogram_compliance.checking_planogram.comparison.normalize_name import normalize_name
 
 class CompliancePlanogram:
     def __init__(self):
         self.planogram = PlanogramReader()  # читает xlsx-планограммы
 
-    # Сравнивает распознанные товары с планограммой полка за полкой.
+    # Сравнивает распознанные товары с планограммой по имени, в целом на полке —
+    # без привязки к позиции: не важно, где именно на полке лежит товар,
+    # важно, нашёлся ли он среди распознанных хоть где-то на этой полке.
+    # Возвращает тот же 5-элементный кортеж, что и comparison_by_positions, чтобы
+    # не ломать вызывающий код (check_planogram_compliance.py) — но реально
+    # считается только missing_report, остальное — заглушки-пустышки.
     def comparison(self, all_products_identified, markup, markup_path):
+        name_markup = os.path.splitext(os.path.basename(markup_path))[0]
+        rows_with_xlsx = self.planogram.read_table_to_array(name_markup)
+        array_planogram = get_shelves(rows_with_xlsx)
+        array_products_identified = get_planogram_array(all_products_identified, markup)
+
+        missing_report = []
+        planogram_len = len(array_planogram)
+
+        for i in range(planogram_len):
+            shelf_expected = array_planogram[i]
+            shelf_actual = get_shelf_actual_products(array_products_identified, i, planogram_len)
+
+            actual_names = {normalize_name(product.get('name', '')) for product in shelf_actual}
+
+            shelf_missing = []
+            seen = set()
+            for expected in shelf_expected:
+                name = expected.get('name', '')
+                key = normalize_name(name)
+                if key in seen:
+                    continue
+                seen.add(key)
+                if key not in actual_names:
+                    shelf_missing.append(name)
+
+            missing_report.append(shelf_missing)
+
+        # Заглушки: ничего не отрисуют (draw-функции безопасно обрабатывают
+        # пустые segments/списки) и ничего не сообщат по mismatch/present.
+        matches_report = [[] for _ in range(planogram_len)]
+        present_report = [[] for _ in range(planogram_len)]
+        mismatch_report = [[] for _ in range(planogram_len)]
+        shelf_results = [{'segments': [], 'percent_void': 0} for _ in range(planogram_len)]
+
+        return matches_report, missing_report, present_report, mismatch_report, shelf_results
+
+    # (Оно не будет работать с Хуёвыми камерами)X4
+    # Ну вы сделайте?
+    # Сделал
+    # Ахуеть не встать. А оно неработает с Хуёвыми камерами.
+    # Какая неожиданость! А сделайте откат.
+
+    # Функция не будет использоватся до лучших времён или заказчиков
+    # Сравнивает распознанные товары с планограммой полка за полкой ПО ПОЗИЦИЯМ
+    def comparison_by_positions(self, all_products_identified, markup, markup_path):
 
         # Читаем план (xlsx) и группируем распознанные товары по полкам разметки
         # Имя файла без расширения -> str
@@ -40,7 +90,6 @@ class CompliancePlanogram:
             line = markup[i] if i < len(markup) else markup[-1]
             # левый и правый край полки
             line_x_min, line_x_max = get_line_bounds(line)
-
 
             shelf_expected = array_planogram[i]
             # Делит полку на сегменты по размерам товаров -> list[{'name': str, 'size': float, 'x1': float, 'x2': float}]

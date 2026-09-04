@@ -21,15 +21,24 @@ def save_locally(group, file_name, image, combined_report):
     for planogram_name, mismatch_report, missing_report in combined_report:
         text_str += f"[{planogram_name}]\n"
         for i, shelf_mismatches in enumerate(mismatch_report):
-            if not shelf_mismatches:
-                text_str += f"Полка {i + 1}: все позиции совпали\n"
-            else:
-                mismatches = "; ".join(
-                    f"поз. {item['position']}: ожидался '{item['expected']}', найден '{item['actual']}'"
-                    for item in shelf_mismatches
-                )
-                text_str += f"Полка {i + 1}: {mismatches}\n"
 
+            # (Оно не будет работать с Хуёвыми камерами)X4
+            # Ну вы сделайте?
+            # Сделал
+            # Ахуеть не встать. А оно неработает с Хуёвыми камерами.
+            # Какая неожиданость! А сделайте откат.
+
+            # Не будет использоватся до лучших времён или заказчиков
+            # if not shelf_mismatches:
+            #     text_str += f"Полка {i + 1}: все позиции совпали\n"
+            # else:
+            #     mismatches = "; ".join(
+            #         f"поз. {item['position']}: ожидался '{item['expected']}', найден '{item['actual']}'"
+            #         for item in shelf_mismatches
+            #     )
+            #     text_str += f"Полка {i + 1}: {mismatches}\n"
+
+            text_str += f"Полка {i + 1}: \n"
             shelf_missing = missing_report[i] if i < len(missing_report) else []
             if not shelf_missing:
                 text_str += f"  Отсутствуют: нужные товары присутствуют\n"
